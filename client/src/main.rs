@@ -44,12 +44,6 @@ fn connect() -> std::io::Result<()> {
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
 
-    if let Err(e) = socket.send(b"helo, server") {
-        eprint!("error sending to socket: {e}");
-    } else {
-        println!("sent data to server");
-    }
-
     let mut buf = [0; 1024];
     loop {
         println!("reading recv");
@@ -83,4 +77,3 @@ fn get_input_config(device: Device) -> Result<SupportedStreamConfig, Box<dyn std
         return Err("No supported config".into());
     }
 }
-
