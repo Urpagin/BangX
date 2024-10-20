@@ -1,6 +1,6 @@
 use env_logger;
 use log::{debug, error, info, warn};
-use std::{net::UdpSocket, os::unix::process, process::exit};
+use std::{net::UdpSocket, os::unix::process, process::exit, sync::mpsc};
 
 use cpal::{
     platform::DeviceInner,
@@ -39,6 +39,7 @@ fn connect() -> std::io::Result<()> {
                 exit(1);
             }
         } else {
+            info!("Connected to {REMOTE_ADDR}");
             break;
         }
         std::thread::sleep(std::time::Duration::from_secs(1));
@@ -66,6 +67,15 @@ fn connect() -> std::io::Result<()> {
     Ok(())
 }
 
+fn send(socket: &UdpSocket, rx) {
+    let (a, mut b) = mpsc::channel();
+    if let Err(e) = socket.send(b"helo, server") {
+        eprint!("error sending to socket: {e}");
+    } else {
+        println!("sent data to server");
+    }
+}
+
 fn get_host() -> Host {
     cpal::default_host()
 }
@@ -83,4 +93,3 @@ fn get_input_config(device: Device) -> Result<SupportedStreamConfig, Box<dyn std
         return Err("No supported config".into());
     }
 }
-
