@@ -6,6 +6,8 @@ use std::process::exit;
 use std::sync::mpsc;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::time::Duration;
+use std::time::Instant;
 use tokio::net::UdpSocket;
 
 use tokio::task;
@@ -55,6 +57,9 @@ fn init_logging() {
 }
 
 async fn send(socket: UdpSocket, audio_rx: mpsc::Receiver<Vec<f32>>) {
+    let mut bytes_buffer: Vec<u8> = Vec::new();
+
+    let mut start = Instant::now();
     while let Ok(data) = audio_rx.recv() {
         // Convert Vec<f32> to &[u8] for UDP sending
         let bytes: &[u8] = unsafe {
@@ -64,9 +69,19 @@ async fn send(socket: UdpSocket, audio_rx: mpsc::Receiver<Vec<f32>>) {
             )
         };
 
+        bytes_buffer.extend_from_slice(bytes);
+        let current = Instant::now();
+
+        // Every 10ms, send the bytes;
+        if current.duration_since(start) < Duration::from_millis(20) {
+            continue;
+        }
+
         if let Err(e) = socket.send(bytes).await {
             eprintln!("Failed to send data: {}", e);
         }
+        start = Instant::now();
+        println!("SENTT!!");
     }
 }
 
